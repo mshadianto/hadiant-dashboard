@@ -1,0 +1,513 @@
+{
+  "name": "HADIANT Multi-Tenant Wedding AI",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "hadiant-webhook",
+        "options": {}
+      },
+      "id": "webhook-main",
+      "name": "HADIANT Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [200, 300],
+      "webhookId": "hadiant-main"
+    },
+    {
+      "parameters": {
+        "jsCode": "// HADIANT Multi-Tenant Message Filter\n// Filters valid messages and identifies tenant\n\nconst data = $input.first().json;\nconst body = data.body || {};\nconst event = body.event || '';\nconst payload = body.payload || {};\n\n// Extract message details\nconst messageBody = payload.body || '';\nconst from = payload.from || '';\nconst fromMe = payload.fromMe;\nconst sessionName = body.session || 'default';\n\n// Validation checks\nconst isMessage = event.includes('message');\nconst hasBody = messageBody.length > 0;\nconst isFromUser = fromMe === false;\nconst isPrivateChat = from.includes('@c.us') && !from.includes('status@');\n\nif (isMessage && hasBody && isFromUser && isPrivateChat) {\n  // Detect if user wants image\n  const lowerMsg = messageBody.toLowerCase();\n  const wantsImage = lowerMsg.includes('gambar') || \n                    lowerMsg.includes('foto') || \n                    lowerMsg.includes('lihat') || \n                    lowerMsg.includes('tunjuk') || \n                    lowerMsg.includes('contoh') ||\n                    lowerMsg.includes('visualisasi');\n  \n  // Detect decoration style\n  let decorationType = 'elegant Indonesian wedding decoration';\n  if (lowerMsg.includes('rustic')) decorationType = 'rustic wooden Indonesian wedding decoration with fairy lights';\n  else if (lowerMsg.includes('modern')) decorationType = 'modern minimalist Indonesian wedding decoration';\n  else if (lowerMsg.includes('garden')) decorationType = 'outdoor garden Indonesian wedding with natural greenery';\n  else if (lowerMsg.includes('mewah') || lowerMsg.includes('luxury')) decorationType = 'luxurious grand ballroom Indonesian wedding';\n  else if (lowerMsg.includes('intimate')) decorationType = 'intimate cozy Indonesian wedding decoration';\n  else if (lowerMsg.includes('adat') || lowerMsg.includes('traditional')) decorationType = 'traditional Javanese wedding pelaminan';\n  else if (lowerMsg.includes('pelaminan')) decorationType = 'beautiful Indonesian wedding pelaminan stage';\n  else if (lowerMsg.includes('bunga') || lowerMsg.includes('flower')) decorationType = 'romantic floral Indonesian wedding decoration';\n  else if (lowerMsg.includes('boho')) decorationType = 'bohemian style Indonesian wedding decoration';\n  else if (lowerMsg.includes('beach') || lowerMsg.includes('pantai')) decorationType = 'beautiful beach Indonesian wedding decoration';\n  \n  return [{\n    json: {\n      proceed: true,\n      sessionName: sessionName,\n      chatId: from,\n      message: messageBody,\n      senderName: payload.notifyName || body.me?.pushName || 'User',\n      wantsImage: wantsImage,\n      decorationType: decorationType,\n      timestamp: new Date().toISOString()\n    }\n  }];\n}\n\n// Invalid message - don't proceed\nreturn [{ json: { proceed: false } }];"
+      },
+      "id": "filter-message",
+      "name": "Filter & Route Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [400, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "proceed-check",
+              "leftValue": "={{ $json.proceed }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-proceed",
+      "name": "Should Proceed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [600, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://edcmmwadqnpwybflmgtx.supabase.co/rest/v1/tenants?waha_session_name=eq.{{ $json.sessionName }}&select=*,plans(*)",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "YOUR_SUPABASE_ANON_KEY"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_SUPABASE_ANON_KEY"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "get-tenant-config",
+      "name": "Get Tenant Config",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [800, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Merge tenant config with message data\nconst message = $('Filter & Route Message').first().json;\nconst tenantData = $input.first().json;\n\n// Handle if tenant not found\nif (!tenantData || !tenantData[0]) {\n  return [{\n    json: {\n      ...message,\n      tenantId: null,\n      aiName: 'Sarah',\n      systemPrompt: 'Kamu adalah asisten wedding organizer yang ramah.',\n      welcomeMessage: 'Halo! Ada yang bisa dibantu?',\n      planName: 'Starter',\n      chatLimit: 500,\n      imageLimit: 0\n    }\n  }];\n}\n\nconst tenant = tenantData[0];\nconst plan = tenant.plans || {};\n\nreturn [{\n  json: {\n    ...message,\n    tenantId: tenant.id,\n    businessName: tenant.business_name,\n    aiName: tenant.ai_persona_name || 'Sarah',\n    systemPrompt: tenant.ai_system_prompt || `Kamu adalah ${tenant.ai_persona_name || 'Sarah'}, asisten virtual ${tenant.business_name} yang ramah dan profesional.`,\n    welcomeMessage: tenant.ai_welcome_message || 'Halo! Ada yang bisa dibantu?',\n    packages: tenant.packages || [],\n    planName: plan.name || 'Starter',\n    chatLimit: plan.chat_limit_monthly,\n    imageLimit: plan.image_limit_monthly || 0\n  }\n}];"
+      },
+      "id": "merge-tenant-config",
+      "name": "Merge Tenant Config",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1000, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "wants-image",
+              "leftValue": "={{ $json.wantsImage }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "has-image-credits",
+              "leftValue": "={{ $json.imageLimit }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-image-request",
+      "name": "Wants Image?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1200, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://{{ $json.wahaUrl }}/api/startTyping",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Api-Key",
+              "value": "YOUR_WAHA_API_KEY"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"session\": \"{{ $json.sessionName }}\",\n  \"chatId\": \"{{ $json.chatId }}\"\n}",
+        "options": {}
+      },
+      "id": "start-typing",
+      "name": "Start Typing",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1400, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_STABILITY_API_KEY"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text_prompts\": [\n    {\n      \"text\": \"{{ $('Merge Tenant Config').first().json.decorationType }}, professional wedding photography, beautiful lighting, high quality, detailed, 8k\",\n      \"weight\": 1\n    },\n    {\n      \"text\": \"blurry, bad quality, distorted, ugly, watermark, text, cartoon, anime\",\n      \"weight\": -1\n    }\n  ],\n  \"cfg_scale\": 7,\n  \"height\": 1024,\n  \"width\": 1024,\n  \"samples\": 1,\n  \"steps\": 30\n}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "generate-image",
+      "name": "Generate Image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1400, 100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://{{ $('Merge Tenant Config').first().json.wahaUrl }}/api/sendImage",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Api-Key",
+              "value": "YOUR_WAHA_API_KEY"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"session\": \"{{ $('Merge Tenant Config').first().json.sessionName }}\",\n  \"chatId\": \"{{ $('Merge Tenant Config').first().json.chatId }}\",\n  \"file\": {\n    \"mimetype\": \"image/png\",\n    \"data\": \"{{ $json.artifacts[0].base64 }}\"\n  },\n  \"caption\": \"Ini contoh visualisasi dekorasi dari {{ $('Merge Tenant Config').first().json.aiName }} ✨\\n\\nGimana Kak, suka dengan konsep ini? Atau mau lihat style yang lain? 💐\"\n}",
+        "options": {}
+      },
+      "id": "send-image",
+      "name": "Send Image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1600, 100]
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "={{ $('Merge Tenant Config').first().json.systemPrompt }}\n\n# INFORMASI BISNIS\nNama: {{ $('Merge Tenant Config').first().json.businessName }}\nPaket yang tersedia: {{ JSON.stringify($('Merge Tenant Config').first().json.packages) }}\n\n# KEMAMPUAN\n{{ $('Merge Tenant Config').first().json.imageLimit > 0 ? 'Kamu bisa generate gambar visualisasi dekorasi! Jika user minta lihat contoh, bilang: \"Boleh banget Kak! Saya bisa buatkan visualisasi dekorasi sesuai konsep yang Kakak mau.\"' : 'Fitur visualisasi gambar belum tersedia untuk paket ini.' }}"
+        }
+      },
+      "id": "ai-agent",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [1400, 400]
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {
+          "temperature": 0.7
+        }
+      },
+      "id": "groq-model",
+      "name": "Groq Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [1400, 600],
+      "credentials": {
+        "groqApi": {
+          "id": "YOUR_GROQ_CREDENTIAL_ID",
+          "name": "Groq API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionKey": "={{ $('Merge Tenant Config').first().json.sessionName }}_{{ $('Merge Tenant Config').first().json.chatId }}",
+        "contextWindowLength": 10
+      },
+      "id": "memory",
+      "name": "Window Buffer Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.2,
+      "position": [1600, 600]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://{{ $('Merge Tenant Config').first().json.wahaUrl }}/api/sendText",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Api-Key",
+              "value": "YOUR_WAHA_API_KEY"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"session\": \"{{ $('Merge Tenant Config').first().json.sessionName }}\",\n  \"chatId\": \"{{ $('Merge Tenant Config').first().json.chatId }}\",\n  \"text\": {{ JSON.stringify($json.output) }}\n}",
+        "options": {}
+      },
+      "id": "send-reply",
+      "name": "Send Reply",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1800, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://{{ $('Merge Tenant Config').first().json.wahaUrl }}/api/stopTyping",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Api-Key",
+              "value": "YOUR_WAHA_API_KEY"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"session\": \"{{ $('Merge Tenant Config').first().json.sessionName }}\",\n  \"chatId\": \"{{ $('Merge Tenant Config').first().json.chatId }}\"\n}",
+        "options": {}
+      },
+      "id": "stop-typing",
+      "name": "Stop Typing",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2000, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://edcmmwadqnpwybflmgtx.supabase.co/rest/v1/rpc/increment_usage_stat",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "YOUR_SUPABASE_ANON_KEY"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_SUPABASE_ANON_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"p_tenant_id\": \"{{ $('Merge Tenant Config').first().json.tenantId }}\",\n  \"p_date\": \"{{ new Date().toISOString().split('T')[0] }}\",\n  \"p_chat_count\": 1,\n  \"p_message_count\": 2,\n  \"p_image_count\": {{ $('Merge Tenant Config').first().json.wantsImage ? 1 : 0 }}\n}",
+        "options": {}
+      },
+      "id": "log-usage",
+      "name": "Log Usage to Supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2200, 300]
+    }
+  ],
+  "connections": {
+    "HADIANT Webhook": {
+      "main": [
+        [
+          {
+            "node": "Filter & Route Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter & Route Message": {
+      "main": [
+        [
+          {
+            "node": "Should Proceed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Should Proceed?": {
+      "main": [
+        [
+          {
+            "node": "Get Tenant Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Tenant Config": {
+      "main": [
+        [
+          {
+            "node": "Merge Tenant Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Tenant Config": {
+      "main": [
+        [
+          {
+            "node": "Wants Image?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wants Image?": {
+      "main": [
+        [
+          {
+            "node": "Generate Image",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Start Typing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Image": {
+      "main": [
+        [
+          {
+            "node": "Send Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Image": {
+      "main": [
+        [
+          {
+            "node": "Stop Typing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Start Typing": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Window Buffer Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Reply": {
+      "main": [
+        [
+          {
+            "node": "Stop Typing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stop Typing": {
+      "main": [
+        [
+          {
+            "node": "Log Usage to Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "HADIANT",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z"
+    },
+    {
+      "name": "Multi-Tenant",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z"
+    }
+  ]
+}

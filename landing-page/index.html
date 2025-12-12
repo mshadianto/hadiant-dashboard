@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HADIANT - AI Wedding Platform untuk Wedding Organizer</title>
+    <meta name="description" content="Platform AI untuk Wedding Organizer Indonesia. Chatbot WhatsApp otomatis, visualisasi dekorasi AI, dan lead management.">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#8b5cf6',
+                        secondary: '#d946ef',
+                        dark: '#0f0f17',
+                        darker: '#1a1a2e',
+                    },
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        .gradient-text {
+            background: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+        }
+        
+        .card-gradient {
+            background: linear-gradient(135deg, #1a1a2e 0%, #1f1f2e 100%);
+        }
+        
+        .glow {
+            box-shadow: 0 0 60px rgba(139, 92, 246, 0.3);
+        }
+        
+        .floating {
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+    </style>
+</head>
+<body class="bg-dark text-white font-sans">
+    
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 bg-dark/80 backdrop-blur-lg border-b border-gray-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">✨</span>
+                    <span class="text-2xl font-extrabold gradient-text">HADIANT</span>
+                </div>
+                
+                <div class="hidden md:flex items-center gap-8">
+                    <a href="#features" class="text-gray-400 hover:text-white transition">Fitur</a>
+                    <a href="#pricing" class="text-gray-400 hover:text-white transition">Harga</a>
+                    <a href="#demo" class="text-gray-400 hover:text-white transition">Demo</a>
+                    <a href="#contact" class="text-gray-400 hover:text-white transition">Kontak</a>
+                </div>
+                
+                <div class="flex items-center gap-4">
+                    <a href="https://hadiant-dashboard-id.streamlit.app" class="hidden sm:block text-gray-400 hover:text-white transition">Login</a>
+                    <a href="#contact" class="gradient-bg px-5 py-2 rounded-lg font-semibold hover:opacity-90 transition">
+                        Coba Gratis
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Hero Section -->
+    <section class="min-h-screen flex items-center pt-16 relative overflow-hidden">
+        <!-- Background decoration -->
+        <div class="absolute inset-0 overflow-hidden">
+            <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl"></div>
+            <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-secondary/10 rounded-full blur-3xl"></div>
+        </div>
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <div>
+                    <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/30 bg-primary/10 mb-6">
+                        <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                        <span class="text-sm text-gray-300">Platform #1 untuk Wedding Organizer Indonesia</span>
+                    </div>
+                    
+                    <h1 class="text-4xl md:text-6xl font-extrabold mb-6 leading-tight">
+                        <span class="gradient-text">AI Wedding Assistant</span><br>
+                        untuk Wedding Organizer
+                    </h1>
+                    
+                    <p class="text-xl text-gray-400 mb-8 leading-relaxed">
+                        Tingkatkan layanan WO Anda dengan chatbot WhatsApp AI yang bisa menjawab 24/7, 
+                        generate visualisasi dekorasi instan, dan kelola leads otomatis.
+                    </p>
+                    
+                    <div class="flex flex-wrap gap-4 mb-12">
+                        <a href="#contact" class="gradient-bg px-8 py-4 rounded-xl font-bold text-lg hover:opacity-90 transition flex items-center gap-2 glow">
+                            <span>Mulai Gratis 14 Hari</span>
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                            </svg>
+                        </a>
+                        <a href="#demo" class="px-8 py-4 rounded-xl font-bold text-lg border border-gray-700 hover:border-primary transition flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span>Lihat Demo</span>
+                        </a>
+                    </div>
+                    
+                    <div class="flex items-center gap-8">
+                        <div class="flex -space-x-3">
+                            <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-sm font-bold">S</div>
+                            <div class="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-sm font-bold">E</div>
+                            <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-sm font-bold">R</div>
+                            <div class="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-sm font-bold">+</div>
+                        </div>
+                        <div>
+                            <p class="font-bold">40+ Wedding Organizers</p>
+                            <p class="text-sm text-gray-500">Sudah bergabung</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="relative floating">
+                    <!-- Mockup Chat -->
+                    <div class="card-gradient rounded-3xl p-6 border border-gray-800 glow">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="w-12 h-12 rounded-full gradient-bg flex items-center justify-center">
+                                <span class="text-xl">✨</span>
+                            </div>
+                            <div>
+                                <p class="font-bold">Sarah - AI Assistant</p>
+                                <p class="text-sm text-green-500">● Online</p>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div class="bg-gray-800 rounded-2xl rounded-tl-none p-4 max-w-[80%]">
+                                <p class="text-sm">Halo! Saya mau tanya paket wedding untuk 500 tamu</p>
+                            </div>
+                            
+                            <div class="bg-primary/20 rounded-2xl rounded-tr-none p-4 max-w-[80%] ml-auto">
+                                <p class="text-sm">Halo Kak! 💐 Untuk 500 tamu, saya rekomendasikan Paket Grand Wedding kami. Termasuk dekorasi premium, catering, dan dokumentasi lengkap. Budget mulai dari Rp 150jt. Mau lihat contoh dekorasi?</p>
+                            </div>
+                            
+                            <div class="bg-gray-800 rounded-2xl rounded-tl-none p-4 max-w-[80%]">
+                                <p class="text-sm">Boleh, tunjukin dong contoh dekorasi modern</p>
+                            </div>
+                            
+                            <div class="bg-primary/20 rounded-2xl rounded-tr-none p-4 max-w-[80%] ml-auto">
+                                <p class="text-sm mb-2">Ini visualisasi dekorasi modern untuk Kakak ✨</p>
+                                <div class="w-full h-40 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-xl flex items-center justify-center">
+                                    <span class="text-4xl">🎨</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Features Section -->
+    <section id="features" class="py-24 bg-darker">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-5xl font-extrabold mb-4">
+                    Fitur <span class="gradient-text">Powerful</span> untuk WO Anda
+                </h2>
+                <p class="text-xl text-gray-400 max-w-2xl mx-auto">
+                    Semua yang Anda butuhkan untuk meningkatkan layanan dan konversi leads
+                </p>
+            </div>
+            
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Feature 1 -->
+                <div class="card-gradient rounded-2xl p-8 border border-gray-800 hover:border-primary/50 transition group">
+                    <div class="w-14 h-14 rounded-xl gradient-bg flex items-center justify-center mb-6 group-hover:scale-110 transition">
+                        <span class="text-2xl">💬</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">AI Chatbot 24/7</h3>
+                    <p class="text-gray-400">
+                        Jawab pertanyaan klien kapanpun, dengan kepribadian yang bisa disesuaikan untuk brand Anda.
+                    </p>
+                </div>
+                
+                <!-- Feature 2 -->
+                <div class="card-gradient rounded-2xl p-8 border border-gray-800 hover:border-primary/50 transition group">
+                    <div class="w-14 h-14 rounded-xl gradient-bg flex items-center justify-center mb-6 group-hover:scale-110 transition">
+                        <span class="text-2xl">🎨</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">AI Image Generation</h3>
+                    <p class="text-gray-400">
+                        Generate visualisasi dekorasi instan sesuai permintaan klien. Rustic, modern, garden, dll.
+                    </p>
+                </div>
+                
+                <!-- Feature 3 -->
+                <div class="card-gradient rounded-2xl p-8 border border-gray-800 hover:border-primary/50 transition group">
+                    <div class="w-14 h-14 rounded-xl gradient-bg flex items-center justify-center mb-6 group-hover:scale-110 transition">
+                        <span class="text-2xl">📊</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Lead Management</h3>
+                    <p class="text-gray-400">
+                        Kumpulkan dan kelola data leads otomatis. Nama, budget, tanggal, jumlah tamu.
+                    </p>
+                </div>
+                
+                <!-- Feature 4 -->
+                <div class="card-gradient rounded-2xl p-8 border border-gray-800 hover:border-primary/50 transition group">
+                    <div class="w-14 h-14 rounded-xl gradient-bg flex items-center justify-center mb-6 group-hover:scale-110 transition">
+                        <span class="text-2xl">📱</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">WhatsApp Integration</h3>
+                    <p class="text-gray-400">
+                        Langsung terhubung ke WhatsApp Business Anda. Tidak perlu ganti nomor.
+                    </p>
+                </div>
+                
+                <!-- Feature 5 -->
+                <div class="card-gradient rounded-2xl p-8 border border-gray-800 hover:border-primary/50 transition group">
+                    <div class="w-14 h-14 rounded-xl gradient-bg flex items-center justify-center mb-6 group-hover:scale-110 transition">
+                        <span class="text-2xl">🧠</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Memory & Context</h3>
+                    <p class="text-gray-400">
+                        AI mengingat percakapan sebelumnya untuk pengalaman yang lebih personal.
+                    </p>
+                </div>
+                
+                <!-- Feature 6 -->
+                <div class="card-gradient rounded-2xl p-8 border border-gray-800 hover:border-primary/50 transition group">
+                    <div class="w-14 h-14 rounded-xl gradient-bg flex items-center justify-center mb-6 group-hover:scale-110 transition">
+                        <span class="text-2xl">📈</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Analytics Dashboard</h3>
+                    <p class="text-gray-400">
+                        Pantau performa chat, konversi leads, dan insight lainnya dalam dashboard.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Pricing Section -->
+    <section id="pricing" class="py-24">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-5xl font-extrabold mb-4">
+                    Harga <span class="gradient-text">Terjangkau</span>
+                </h2>
+                <p class="text-xl text-gray-400">
+                    Pilih paket yang sesuai dengan kebutuhan bisnis Anda
+                </p>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                <!-- Starter -->
+                <div class="card-gradient rounded-2xl p-8 border border-gray-800">
+                    <h3 class="text-xl font-bold mb-2">Starter</h3>
+                    <p class="text-gray-400 mb-6">Untuk WO yang baru mulai</p>
+                    
+                    <div class="mb-6">
+                        <span class="text-4xl font-extrabold">Rp 299K</span>
+                        <span class="text-gray-400">/bulan</span>
+                    </div>
+                    
+                    <ul class="space-y-3 mb-8">
+                        <li class="flex items-center gap-2">
+                            <span class="text-green-500">✓</span>
+                            <span>500 chat/bulan</span>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <span class="text-green-500">✓</span>
+                            <span>AI Chatbot</span>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <span class="text-green-500">✓</span>
+                            <span>Lead Management</span>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <span class="text-green-500">✓</span>
+                            <span>1 WhatsApp</span>
+                        </li>
+                        <li class="flex items-center gap-2 text-gray-500">
+                            <span>✗</span>
+                            <span>Image Generation</span>
+                        </li>
+                    </ul>
+                    
+                    <a href="#contact" class="block w-full py-3 text-center rounded-xl border border-gray-700 hover:border-primary transition font-semibold">
+                        Pilih Starter
+                    </a>
+                </div>
+                
+                <!-- Professional -->
+                <div class="card-gradient rounded-2xl p-8 border-2 border-primary relative">
+                    <div class="absolute -top-4 left-1/2 -translate-x-1/2 gradient-bg px-4 py-1 rounded-full text-sm font-bold">
+                        POPULER
+                    </div>
+                    
+                    <h3 class="text-xl font-bold mb-2">Professional</h3>
+                    <p class="text-gray-400 mb-6">Untuk WO yang berkembang</p>
+                    
+                    <div class="mb-6">
+                        <span class="text-4xl font-extrabold">Rp 599K</span>
+                        <span class="text-gray-400">/bulan</span>
+                    </div>
+                    
+                    <ul class="space-y-3 mb-8">
+                        <li class="flex items-center gap-2">
+                            <span class="text-green-500">✓</span>
+                            <span>2,000 chat/bulan</span>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <span class="text-green-500">✓</span>
+                            <span>AI Chatbot</span>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <span class="text-green-500">✓</span>
+                            <span>Lead Management</span>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <span class="text-green-500">✓</span>
+                            <span>1 WhatsApp</span>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <span class="text-green-500">✓</span>
+                            <span class="gradient-text font-semibold">50 Image/bulan</span>
+                        </li>
+                    </ul>
+                    
+                    <a href="#contact" class="block w-full py-3 text-center rounded-xl gradient-bg font-semibold hover:opacity-90 transition">
+                        Pilih Professional
+                    </a>
+                </div>
+                
+                <!-- Business -->
+                <div class="card-gradient rounded-2xl p-8 border border-gray-800">
+                    <h3 class="text-xl font-bold mb-2">Business</h3>
+                    <p class="text-gray-400 mb-6">Untuk WO besar</p>
+                    
+                    <div class="mb-6">
+                        <span class="text-4xl font-extrabold">Rp 999K</span>
+                        <span class="text-gray-400">/bulan</span>
+                    </div>
+                    
+                    <ul class="space-y-3 mb-8">
+                        <li class="flex items-center gap-2">
+                            <span class="text-green-500">✓</span>
+                            <span>Unlimited chat</span>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <span class="text-green-500">✓</span>
+                            <span>AI Chatbot</span>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <span class="text-green-500">✓</span>
+                            <span>Lead Management</span>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <span class="text-green-500">✓</span>
+                            <span>3 WhatsApp</span>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <span class="text-green-500">✓</span>
+                            <span class="gradient-text font-semibold">200 Image/bulan</span>
+                        </li>
+                    </ul>
+                    
+                    <a href="#contact" class="block w-full py-3 text-center rounded-xl border border-gray-700 hover:border-primary transition font-semibold">
+                        Pilih Business
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- CTA Section -->
+    <section id="contact" class="py-24 bg-darker">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-3xl md:text-5xl font-extrabold mb-6">
+                Siap Tingkatkan Bisnis WO Anda?
+            </h2>
+            <p class="text-xl text-gray-400 mb-12">
+                Coba gratis 14 hari. Tidak perlu kartu kredit.
+            </p>
+            
+            <form class="max-w-md mx-auto space-y-4">
+                <input type="text" placeholder="Nama Wedding Organizer" class="w-full px-6 py-4 rounded-xl bg-gray-800 border border-gray-700 focus:border-primary focus:outline-none">
+                <input type="tel" placeholder="Nomor WhatsApp" class="w-full px-6 py-4 rounded-xl bg-gray-800 border border-gray-700 focus:border-primary focus:outline-none">
+                <input type="email" placeholder="Email" class="w-full px-6 py-4 rounded-xl bg-gray-800 border border-gray-700 focus:border-primary focus:outline-none">
+                <button type="submit" class="w-full py-4 rounded-xl gradient-bg font-bold text-lg hover:opacity-90 transition">
+                    Mulai Trial Gratis →
+                </button>
+            </form>
+            
+            <p class="text-gray-500 mt-6 text-sm">
+                Atau hubungi kami langsung di <a href="https://wa.me/6281596588833" class="text-primary hover:underline">WhatsApp</a>
+            </p>
+        </div>
+    </section>
+    
+    <!-- Footer -->
+    <footer class="py-12 border-t border-gray-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">✨</span>
+                    <span class="text-xl font-extrabold gradient-text">HADIANT</span>
+                </div>
+                
+                <p class="text-gray-500">
+                    © 2025 HADIANT by MS Hadianto. All rights reserved.
+                </p>
+                
+                <div class="flex items-center gap-6">
+                    <a href="#" class="text-gray-400 hover:text-white transition">Instagram</a>
+                    <a href="#" class="text-gray-400 hover:text-white transition">LinkedIn</a>
+                    <a href="#" class="text-gray-400 hover:text-white transition">GitHub</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+</body>
+</html>
