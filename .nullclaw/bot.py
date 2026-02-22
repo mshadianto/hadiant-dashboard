@@ -405,7 +405,10 @@ async def scheduled_check(context: ContextTypes.DEFAULT_TYPE):
 
 
 async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    logging.info("/start from user=%s (username=%s, id=%s)", user.first_name if user else "?", user.username if user else "?", user.id if user else "?")
     if not is_allowed(update):
+        logging.warning("/start denied: user %s not in whitelist %s", user.username if user else "unknown", ALLOWED_USERS)
         return
     db: Database = context.bot_data["db"]
     db.set_kv("telegram_chat_id", str(update.effective_chat.id))
@@ -506,7 +509,10 @@ async def _chat_groq(messages: list[dict], model: str) -> str | None:
 
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    logging.info("Message from user=%s (username=%s, id=%s)", user.first_name if user else "?", user.username if user else "?", user.id if user else "?")
     if not is_allowed(update):
+        logging.warning("User %s not in whitelist, ignoring", user.username if user else "unknown")
         return
     if not update.message or not update.message.text:
         return
@@ -573,7 +579,7 @@ def main():
     app.add_handler(CommandHandler("start", cmd_start))
     app.add_handler(CommandHandler("status", cmd_status))
     app.add_handler(CommandHandler("check", cmd_check))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    app.add_handler(MessageHandler(filters.ALL, handle_message))
 
     app.job_queue.run_repeating(
         callback=scheduled_check,
