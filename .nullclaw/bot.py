@@ -20,7 +20,8 @@ from telegram.ext import (
     ContextTypes,
     filters,
 )
-import google.generativeai as genai
+from google import genai
+from google.genai import types as genai_types
 from groq import AsyncGroq
 
 # ---------------------------------------------------------------------------
@@ -46,9 +47,7 @@ TEMPERATURE = cfg.get("default_temperature", 0.7)
 GEMINI_API_KEY = cfg["models"]["providers"].get("gemini", {}).get("api_key")
 GROQ_API_KEY = cfg["models"]["providers"].get("groq", {}).get("api_key")
 
-if GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY)
-
+gemini_client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
 groq_client = AsyncGroq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 
 REPOS = ["mshadianto/bayan_ai", "mshadianto/labbaik-v7.1"]
@@ -465,24 +464,30 @@ async def cmd_check(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def _chat_gemini(messages: list[dict], model: str) -> str | None:
-    """Call Gemini API. Converts openai-style messages to Gemini format."""
-    gemini_history = []
+    """Call Gemini API via google.genai Client."""
+    if not gemini_client:
+        return None
+    gemini_contents = []
     for m in messages:
         if m["role"] == "system":
-            continue  # system prompt passed via system_instruction
+            continue
         role = "user" if m["role"] == "user" else "model"
-        gemini_history.append({"role": role, "parts": [m["content"]]})
+        gemini_contents.append(genai_types.Content(
+            role=role,
+            parts=[genai_types.Part(text=m["content"])],
+        ))
 
-    gm = genai.GenerativeModel(
-        model_name=model,
+    config = genai_types.GenerateContentConfig(
         system_instruction=SYSTEM_PROMPT,
-        generation_config=genai.GenerationConfig(
-            temperature=TEMPERATURE,
-            max_output_tokens=1024,
-        ),
+        temperature=TEMPERATURE,
+        max_output_tokens=1024,
     )
     resp = await asyncio.to_thread(
-        lambda: gm.generate_content(gemini_history)
+        lambda: gemini_client.models.generate_content(
+            model=model,
+            contents=gemini_contents,
+            config=config,
+        )
     )
     return resp.text
 
