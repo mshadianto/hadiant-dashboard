@@ -4,8 +4,8 @@
 # Allow nullclaw files
 !/.gitignore
 !/CLAUDE.md
-!/config.json
 !/daemon_state.json
+!/bot.py
 !/workspace/
 
 # Ignore sensitive/binary files inside workspace
