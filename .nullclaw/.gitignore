@@ -1,0 +1,14 @@
+# Ignore everything by default (repo is inside home directory)
+/*
+
+# Allow nullclaw files
+!/.gitignore
+!/CLAUDE.md
+!/config.json
+!/daemon_state.json
+!/workspace/
+
+# Ignore sensitive/binary files inside workspace
+workspace/memory.db
+workspace/memory.db-shm
+workspace/memory.db-wal

@@ -1,0 +1,11 @@
+# Ignore everything (repo is the home directory)
+/*
+
+# Allow .gitignore and .nullclaw
+!/.gitignore
+!/.nullclaw/
+
+# Ignore sensitive/binary files inside nullclaw
+.nullclaw/workspace/memory.db
+.nullclaw/workspace/memory.db-shm
+.nullclaw/workspace/memory.db-wal

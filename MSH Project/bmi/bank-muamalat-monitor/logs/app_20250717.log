@@ -1,6 +1,0 @@
-2025-07-17 21:43:04,474 - __main__ - ERROR - Page rendering error: 'Figure' object has no attribute 'update_yaxis'
-2025-07-17 21:45:43,918 - __main__ - ERROR - Page rendering error: 'Figure' object has no attribute 'update_yaxis'
-2025-07-17 21:49:22,045 - __main__ - ERROR - Page rendering error: 'Figure' object has no attribute 'update_yaxis'
-2025-07-17 21:51:41,752 - __main__ - ERROR - Agent initialization error: 'Config' object has no attribute 'EMBEDDING_MODEL'
-2025-07-17 21:51:45,255 - __main__ - ERROR - Agent initialization error: 'Config' object has no attribute 'EMBEDDING_MODEL'
-2025-07-17 22:03:45,349 - __main__ - ERROR - Page rendering error: 'Figure' object has no attribute 'update_yaxis'
