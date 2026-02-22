@@ -522,14 +522,13 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     messages = [{"role": "system", "content": SYSTEM_PROMPT}] + conversations[chat_id]
 
-    # Build provider chain: primary model first, then fallback
-    attempts = []
-    if DEFAULT_PROVIDER == "gemini":
-        attempts.append(("gemini", MODEL_PRIMARY, _chat_gemini))
-        attempts.append(("groq", MODEL_FALLBACK, _chat_groq))
-    else:
-        attempts.append(("groq", MODEL_PRIMARY, _chat_groq))
-        attempts.append(("gemini", MODEL_FALLBACK, _chat_gemini))
+    # Build provider chain: each provider uses its own model
+    provider_map = {
+        "gemini": ("gemini", MODEL_PRIMARY, _chat_gemini),
+        "groq": ("groq", MODEL_FALLBACK, _chat_groq),
+    }
+    fallback_provider = "groq" if DEFAULT_PROVIDER == "gemini" else "gemini"
+    attempts = [provider_map[DEFAULT_PROVIDER], provider_map[fallback_provider]]
 
     reply = None
     for provider, model, chat_fn in attempts:
