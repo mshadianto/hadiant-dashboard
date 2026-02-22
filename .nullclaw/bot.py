@@ -1,6 +1,6 @@
 """
 Moni — nullclaw Telegram Bot
-GitHub repo monitor + Groq LLM chat assistant.
+GitHub repo monitor + multi-provider LLM chat assistant.
 Run: python bot.py
 """
 
@@ -20,6 +20,7 @@ from telegram.ext import (
     ContextTypes,
     filters,
 )
+import google.generativeai as genai
 from groq import AsyncGroq
 
 # ---------------------------------------------------------------------------
@@ -35,11 +36,20 @@ with open(CONFIG_PATH, "r", encoding="utf-8") as _f:
 
 BOT_TOKEN = cfg["channels"]["telegram"]["accounts"]["main"]["bot_token"]
 ALLOWED_USERS = set(cfg["channels"]["telegram"]["accounts"]["main"]["allow_from"])
-GROQ_API_KEY = cfg["models"]["providers"]["groq"]["api_key"]
+DEFAULT_PROVIDER = cfg.get("default_provider", "groq")
 MODEL_PRIMARY = cfg["agents"]["defaults"]["model"]["primary"]
 MODEL_FALLBACK = cfg["agents"]["defaults"]["model"]["fallback"]
 SYSTEM_PROMPT = cfg["agents"]["defaults"]["system_prompt"]
 TEMPERATURE = cfg.get("default_temperature", 0.7)
+
+# Provider clients
+GEMINI_API_KEY = cfg["models"]["providers"].get("gemini", {}).get("api_key")
+GROQ_API_KEY = cfg["models"]["providers"].get("groq", {}).get("api_key")
+
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
+
+groq_client = AsyncGroq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 
 REPOS = ["mshadianto/bayan_ai", "mshadianto/labbaik-v7.1"]
 CHECK_INTERVAL_SECONDS = 1800  # 30 minutes
@@ -47,7 +57,6 @@ ACTIVE_HOUR_START = 8
 ACTIVE_HOUR_END = 22
 WIB = timezone(timedelta(hours=7))
 
-groq_client = AsyncGroq(api_key=GROQ_API_KEY)
 conversations: dict[int, list[dict]] = {}
 MAX_HISTORY = 20
 
@@ -455,6 +464,42 @@ async def cmd_check(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ---------------------------------------------------------------------------
 
 
+async def _chat_gemini(messages: list[dict], model: str) -> str | None:
+    """Call Gemini API. Converts openai-style messages to Gemini format."""
+    gemini_history = []
+    for m in messages:
+        if m["role"] == "system":
+            continue  # system prompt passed via system_instruction
+        role = "user" if m["role"] == "user" else "model"
+        gemini_history.append({"role": role, "parts": [m["content"]]})
+
+    gm = genai.GenerativeModel(
+        model_name=model,
+        system_instruction=SYSTEM_PROMPT,
+        generation_config=genai.GenerationConfig(
+            temperature=TEMPERATURE,
+            max_output_tokens=1024,
+        ),
+    )
+    resp = await asyncio.to_thread(
+        lambda: gm.generate_content(gemini_history)
+    )
+    return resp.text
+
+
+async def _chat_groq(messages: list[dict], model: str) -> str | None:
+    """Call Groq API."""
+    if not groq_client:
+        return None
+    resp = await groq_client.chat.completions.create(
+        model=model,
+        messages=messages,
+        temperature=TEMPERATURE,
+        max_tokens=1024,
+    )
+    return resp.choices[0].message.content
+
+
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not is_allowed(update):
         return
@@ -472,19 +517,23 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     messages = [{"role": "system", "content": SYSTEM_PROMPT}] + conversations[chat_id]
 
+    # Build provider chain: primary model first, then fallback
+    attempts = []
+    if DEFAULT_PROVIDER == "gemini":
+        attempts.append(("gemini", MODEL_PRIMARY, _chat_gemini))
+        attempts.append(("groq", MODEL_FALLBACK, _chat_groq))
+    else:
+        attempts.append(("groq", MODEL_PRIMARY, _chat_groq))
+        attempts.append(("gemini", MODEL_FALLBACK, _chat_gemini))
+
     reply = None
-    for model in [MODEL_PRIMARY, MODEL_FALLBACK]:
+    for provider, model, chat_fn in attempts:
         try:
-            resp = await groq_client.chat.completions.create(
-                model=model,
-                messages=messages,
-                temperature=TEMPERATURE,
-                max_tokens=1024,
-            )
-            reply = resp.choices[0].message.content
-            break
+            reply = await chat_fn(messages, model)
+            if reply:
+                break
         except Exception as e:
-            logging.error("Groq %s error: %s", model, e)
+            logging.error("%s %s error: %s", provider, model, e)
 
     if not reply:
         reply = "Maaf, saya sedang mengalami gangguan. Coba lagi nanti ya."
