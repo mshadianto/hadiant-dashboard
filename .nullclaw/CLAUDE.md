@@ -4,35 +4,36 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Repository Is
 
-This is the `.nullclaw` configuration directory for **nullclaw**, a personal AI assistant framework (v0.1.0). It is not a traditional source code project — it contains workspace configuration files, persona definitions, and a SQLite memory store that together define an AI agent's behavior, identity, and runtime settings.
+This is the `.nullclaw` configuration directory for **nullclaw** (v0.1.0), a personal AI assistant. It contains two things: (1) a Telegram bot (`bot.py`) that runs as the "Moni" assistant with GitHub monitoring, and (2) workspace configuration files that define the agent's persona, rules, and memory.
 
-## Repository Structure
+## Running the Bot
 
-- `config.json` — Runtime configuration: LLM provider settings, autonomy level, memory backend, gateway/channel config, tool limits, cost controls
-- `daemon_state.json` — Tracks running daemon components (gateway, channels, scheduler)
-- `workspace/` — Agent workspace containing:
-  - `IDENTITY.md` — Agent name and version
-  - `PERSONA.md`, `SOUL.md` — Personality and communication style
-  - `RULES.md` — Behavioral constraints
-  - `AGENTS.md`, `TOOLS.md` — Guidelines for tool use and agent behavior
-  - `USER.md`, `MEMORY.md` — User profile and persistent memory
-  - `BOOTSTRAP.md` — Startup instructions
-  - `HEARTBEAT.md` — Periodic task definitions
-  - `memory.db` — SQLite database for conversation/memory persistence
+```bash
+python bot.py
+```
+
+Requires `gh` CLI authenticated and on PATH (used for GitHub API calls). Python dependencies: `python-telegram-bot`, `google-genai`, `groq`.
 
 ## Architecture
 
-nullclaw runs as a daemon with three components (see `daemon_state.json`):
-1. **Gateway** — HTTP API on `127.0.0.1:3000` (configurable), requires pairing
-2. **Channels** — External messaging integrations (currently Telegram)
-3. **Scheduler** — Periodic task execution (tied to `HEARTBEAT.md`)
+`bot.py` is the sole executable. It runs a Telegram bot with two functions:
 
-The agent uses OpenRouter as its LLM provider (model: `openai/gpt-4o-mini`) with supervised autonomy mode (max 20 actions/hour, workspace-only file access).
+1. **GitHub Monitor** — Polls `mshadianto/bayan_ai` and `mshadianto/labbaik-v7.1` every 30 minutes (08:00–22:00 WIB) via `gh api` subprocess calls. Tracks commits, PRs, issues, and workflow runs in SQLite (`workspace/memory.db`). Sends Telegram notifications on new activity.
 
-Memory uses SQLite with auto-save, 7-day archive, and 30-day purge cycles.
+2. **LLM Chat** — Responds to Telegram messages using a provider fallback chain. Default provider is Groq (model: `llama-3.3-70b-versatile`), fallback is Gemini (model: `gemini-2.0-flash`). The system prompt is embedded in `config.json` under `agents.defaults.system_prompt`. Conversation history is kept in-memory per chat (max 20 messages).
 
-## Key Configuration Notes
+The bot is whitelisted to `allow_from` usernames in config. Commands: `/start`, `/status`, `/check`.
 
-- Autonomy is set to `supervised` with `workspace_only: true` — the agent should only modify files within the `workspace/` directory
-- The workspace markdown files are the agent's "prompt engineering" — editing them changes how the nullclaw agent behaves
-- `config.json` contains API keys and bot tokens — treat as sensitive
+## Key Files
+
+- `config.json` — All runtime config: API keys (Gemini, Groq, Anthropic), bot token, LLM model/provider settings, system prompt, autonomy limits, cost controls. **Sensitive — never commit plaintext keys.**
+- `bot.py` — Telegram bot: GitHub monitoring + multi-provider LLM chat
+- `workspace/` — Markdown files that define the nullclaw agent's behavior (persona, rules, identity). Editing these files changes how the agent behaves. `memory.db` inside workspace stores GitHub monitoring state.
+- `daemon_state.json` — Tracks daemon component status (gateway, channels, scheduler)
+
+## Configuration Notes
+
+- Autonomy: `supervised`, `workspace_only: true`, max 50 actions/hour
+- Memory: SQLite with auto-save, 30-day archive, 90-day purge, 90-day conversation retention
+- Cost limits: $5/day, $50/month
+- The `.gitignore` allowlists specific files — most of the home directory is ignored. `memory.db` and its WAL files are gitignored.
